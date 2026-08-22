@@ -31,14 +31,27 @@ pipeline {
                 sh 'mvn clean package -DskipTests'
             }
         }
- stage('Approval') {
-            steps {
-                input(
-                    message: 'Approve deployment to Tomcat?',
-                    ok: 'Deploy'
-                )
+stage('Approval') {
+    steps {
+        script {
+            def approval = input(
+                message: 'Do you want to deploy this WAR to Tomcat?',
+                ok: 'Submit',
+                parameters: [
+                    choice(
+                        name: 'DEPLOYMENT_ACTION',
+                        choices: ['Deploy', 'Cancel'],
+                        description: 'Select what you want to do'
+                    )
+                ]
+            )
+
+            if (approval == 'Cancel') {
+                error('Deployment cancelled by user.')
             }
         }
+    }
+}
        
 
         stage('Deploy') {
