@@ -32,14 +32,7 @@ pipeline {
             }
         }
 
-        stage('Approval') {
-            steps {
-                input(
-                    message: 'Approve deployment to Tomcat?',
-                    ok: 'Deploy'
-                )
-            }
-        }
+       
 
         stage('Deploy') {
             steps {
