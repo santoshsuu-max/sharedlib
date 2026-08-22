@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        TOMCAT_IP = '3.109.201.217'
+        TOMCAT_IP = '43.204.96.94'
         TOMCAT_USER = 'ubuntu'
         TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
     }
