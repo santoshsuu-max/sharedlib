@@ -10,11 +10,11 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/santoshsuu-max/https://github.com/santoshsuu-max/sharedlib/edit/masjinkinsfileter/'
-            }
-        }
+    steps {
+        git branch: 'main',
+            url: 'https://github.com/santoshsuu-max/maven-web-app.git'
+    }
+}
 
         stage('Test') {
             steps {
