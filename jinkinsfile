@@ -65,6 +65,44 @@ pipeline {
             }
         }
     }
+ post {
+        success {
+            emailext(
+                to: 'santoshsuu@gmail.com',
+                subject: "Jenkins Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    Hello,
 
-  
+                    Jenkins build has been successfully deployed.
+
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+
+                    Regards,
+                    Jenkins
+                """
+            )
+        }
+
+        failure {
+            emailext(
+                to: 'santoshsuu@gmail.com',
+                subject: "Jenkins Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    Hello,
+
+                    Jenkins build has failed.
+
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+
+                    Please check the Jenkins console output.
+
+                    Regards,
+                    Jenkins
+                """
+            )
+        }
+    }
 }
+
