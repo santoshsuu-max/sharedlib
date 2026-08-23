@@ -1,65 +1,66 @@
 pipeline {
-
     agent any
 
     environment {
-        TOMCAT_IP = '43.204.96.94'
-        TOMCAT_USER = 'ubuntu'
-        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+        M2_HOME = "/usr/share/maven" // Update this if needed
+        PATH = "$M2_HOME/bin:$PATH"
     }
 
     stages {
-
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git(
-                    url: 'https://github.com/santoshsuu-max/maven-web-app.git',
-                    branch: 'main',
-                    credentialsId: 'github-creds'
-                )
+                git branch: 'main',
+                url: 'https://github.com/nimbuswiztech/maven_webapp.git'
             }
         }
 
-        stage('Test') {
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Run Unit Tests') {
             steps {
                 sh 'mvn test'
             }
         }
 
-        stage('Build') {
+        stage('Instsall app') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean install'
             }
         }
-stage('Approval') {
-    steps {
-        script {
-            def approval = input(
-                message: 'Do you want to deploy this WAR to Tomcat?',
-                ok: 'Submit',
-                parameters: [
-                    choice(
-                        name: 'DEPLOYMENT_ACTION',
-                        choices: ['Deploy', 'Cancel'],
-                        description: 'Select what you want to do'
+
+        stage('Approval') {
+            steps {
+                script {
+                    def decision = input(
+                        message: 'Approve to continue or Deny to stop',
+                        parameters: [
+                            choice(
+                                name: 'DECISION',
+                                choices: ['Approve', 'Deny'],
+                                description: 'Select your decision'
+                            )
+                        ]
                     )
-                ]
-            )
 
-            if (approval == 'Cancel') {
-                error('Deployment cancelled by user.')
+                    if (decision == 'Deny') {
+                        error('❌ Deployment denied. Pipeline stopped.')
+                    }
+
+                    echo '✅ Approved. Continuing immediately...'
+                }
             }
         }
-    }
-}
-       
 
+        
         stage('Deploy') {
             steps {
-                sshagent(credentials: ['tomcat-ssh-key']) {
-                    sh '''
-                        scp -o StrictHostKeyChecking=no target/*.war ${TOMCAT_USER}@${TOMCAT_IP}:${TOMCAT_WEBAPPS}
-                    '''
+                sshagent(['tomcat']) {
+                    sh 'scp -o StrictHostKeyChecking=no target/demo.war ubuntu@65.0.99.249:/home/ubuntu/'
+                    sh 'ssh ubuntu@65.0.99.249 "sudo mv /home/ubuntu/demo.war /opt/tomcat/webapps/"'
                 }
             }
         }
@@ -67,15 +68,41 @@ stage('Approval') {
 
     post {
         success {
-            echo 'Pipeline completed successfully.'
+            emailext(
+                to: 'chaitrae1688@gmail.com',
+                subject: "Jenkins Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    Hello,
+
+                    Jenkins build has been successfully deployed.
+
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+
+                    Regards,
+                    Jenkins
+                """
+            )
         }
 
         failure {
-            echo 'Pipeline failed.'
-        }
+            emailext(
+                to: 'chaitrae1688@gmail.com',
+                subject: "Jenkins Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    Hello,
 
-        always {
-            cleanWs()
+                    Jenkins build has failed.
+
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+
+                    Please check the Jenkins console output.
+
+                    Regards,
+                    Jenkins
+                """
+            )
         }
     }
 }
